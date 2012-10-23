@@ -9,7 +9,6 @@
 
 #import "SVProgressHUD.h"
 #import <QuartzCore/QuartzCore.h>
-#import "FSUIWindow.h"
 
 // SVGlassPane private class
 @interface SVGlassPane : UIWindow
@@ -64,7 +63,6 @@
 @synthesize overlayWindow, hudView, maskType, fadeOutTimer, stringLabel, imageView, spinnerView, visibleKeyboardHeight, windowDelegate;
 
 - (void)dealloc {
-    [ super dealloc ];
 	self.fadeOutTimer = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
