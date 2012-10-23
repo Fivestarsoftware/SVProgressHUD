@@ -21,6 +21,8 @@ typedef NSUInteger SVProgressHUDMaskType;
 
 @interface SVProgressHUD : UIView
 
++ (void)setWindowDelegate:(UIWindow *)windowDelegate;
+
 + (void)show;
 + (void)showWithStatus:(NSString*)status;
 + (void)showWithStatus:(NSString*)status maskType:(SVProgressHUDMaskType)maskType;

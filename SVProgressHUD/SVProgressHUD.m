@@ -9,13 +9,37 @@
 
 #import "SVProgressHUD.h"
 #import <QuartzCore/QuartzCore.h>
+#import "FSUIWindow.h"
+
+// SVGlassPane private class
+@interface SVGlassPane : UIWindow
+@property(nonatomic,retain) UIWindow *windowDelegate;
+@end
+
+@implementation SVGlassPane : UIWindow
+@synthesize windowDelegate = _windowDelegate;
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+    if ( self.windowDelegate ) {
+        return [ self.windowDelegate hitTest:point withEvent:event ];
+    } else {
+        return [super hitTest:point withEvent:event];
+    }
+    
+}
+
+@end
+// End SVGlass Pane
 
 @interface SVProgressHUD ()
 
+@property (nonatomic, assign) UIWindow *windowDelegate;
+ 
 @property (nonatomic, readwrite) SVProgressHUDMaskType maskType;
 @property (nonatomic, strong, readonly) NSTimer *fadeOutTimer;
 
-@property (nonatomic, strong, readonly) UIWindow *overlayWindow;
+@property (nonatomic, strong, readonly) SVGlassPane *overlayWindow;
 @property (nonatomic, strong, readonly) UIView *hudView;
 @property (nonatomic, strong, readonly) UILabel *stringLabel;
 @property (nonatomic, strong, readonly) UIImageView *imageView;
@@ -35,12 +59,12 @@
 
 @end
 
-
 @implementation SVProgressHUD
 
-@synthesize overlayWindow, hudView, maskType, fadeOutTimer, stringLabel, imageView, spinnerView, visibleKeyboardHeight;
+@synthesize overlayWindow, hudView, maskType, fadeOutTimer, stringLabel, imageView, spinnerView, visibleKeyboardHeight, windowDelegate;
 
 - (void)dealloc {
+    [ super dealloc ];
 	self.fadeOutTimer = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -59,6 +83,11 @@
 }
 
 #pragma mark - Show Methods
+
++ (void)setWindowDelegate:(UIWindow *)windowDelegate
+{
+    [SVProgressHUD sharedView].windowDelegate = windowDelegate;
+}
 
 + (void)show {
     [[SVProgressHUD sharedView] showWithStatus:nil maskType:SVProgressHUDMaskTypeNone networkIndicator:NO];
@@ -148,7 +177,7 @@
             
             size_t locationsCount = 2;
             CGFloat locations[2] = {0.0f, 1.0f};
-            CGFloat colors[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.75f}; 
+            CGFloat colors[8] = {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.75f};
             CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
             CGGradientRef gradient = CGGradientCreateWithColorComponents(colorSpace, colors, locations, locationsCount);
             CGColorSpaceRelease(colorSpace);
@@ -165,34 +194,34 @@
 
 - (void)setStatus:(NSString *)string {
 	
-    CGFloat hudWidth = 100;
-    CGFloat hudHeight = 100;
+    CGFloat hudWidth = self.bounds.size.width;
+    CGFloat hudHeight;// = 40;
     CGFloat stringWidth = 0;
     CGFloat stringHeight = 0;
     CGRect labelRect = CGRectZero;
     
     if(string) {
-        CGSize stringSize = [string sizeWithFont:self.stringLabel.font constrainedToSize:CGSizeMake(200, 300)];
+        CGSize stringSize = [string sizeWithFont:self.stringLabel.font constrainedToSize:CGSizeMake(280, 40)];
         stringWidth = stringSize.width;
         stringHeight = stringSize.height;
-        hudHeight = 80+stringHeight;
+        hudHeight = 30;//80+stringHeight;
         
         if(stringWidth > hudWidth)
             hudWidth = ceil(stringWidth/2)*2;
-        
-        if(hudHeight > 100) {
-            labelRect = CGRectMake(12, 66, hudWidth, stringHeight);
-            hudWidth+=24;
-        } else {
-            hudWidth+=24;  
-            labelRect = CGRectMake(0, 66, hudWidth, stringHeight);   
-        }
+
+//        if(hudHeight > 100) {
+//            labelRect = CGRectMake(12, 66, hudWidth, stringHeight);
+//            hudWidth+=24;
+//        } else {
+            //hudWidth+=24;
+            labelRect = CGRectMake(40, 8, hudWidth, stringHeight);
+//        }
     }
 	
 	self.hudView.bounds = CGRectMake(0, 0, hudWidth, hudHeight);
 	
     if(string)
-        self.imageView.center = CGPointMake(CGRectGetWidth(self.hudView.bounds)/2, 36);
+        self.imageView.center = CGPointMake(20, 15); //CGRectGetWidth(self.hudView.bounds)/2, 36);
 	else
        	self.imageView.center = CGPointMake(CGRectGetWidth(self.hudView.bounds)/2, CGRectGetHeight(self.hudView.bounds)/2);
 	
@@ -201,7 +230,7 @@
 	self.stringLabel.frame = labelRect;
 	
 	if(string)
-		self.spinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.hudView.bounds)/2)+0.5, 40.5);
+		self.spinnerView.center = CGPointMake( 20, 15 ); //CGPointMake(ceil(CGRectGetWidth(self.hudView.bounds)/2)+0.5, 40.5);
 	else
 		self.spinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.hudView.bounds)/2)+0.5, ceil(self.hudView.bounds.size.height/2)+0.5);
 }
@@ -245,7 +274,7 @@
 
 
 - (void)positionHUD:(NSNotification*)notification {
-    
+
     CGFloat keyboardHeight;
     double animationDuration;
     
@@ -286,7 +315,7 @@
         activeHeight += statusBarFrame.size.height*2;
     
     activeHeight -= keyboardHeight;
-    CGFloat posY = floor(activeHeight*0.45);
+    CGFloat posY = 79;//410;//floor(activeHeight*0.45);
     CGFloat posX = orientationFrame.size.width/2;
     
     CGPoint newCenter;
@@ -347,8 +376,11 @@
         
         if(self.maskType != SVProgressHUDMaskTypeNone) {
             self.overlayWindow.userInteractionEnabled = YES;
+            self.overlayWindow.windowDelegate = self.windowDelegate;
+
         } else {
             self.overlayWindow.userInteractionEnabled = NO;
+            self.overlayWindow.windowDelegate = nil;
         }
         
         [self.overlayWindow makeKeyAndVisible];
@@ -356,13 +388,13 @@
         
         if(self.alpha != 1) {
             [self registerNotifications];
-            self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1.3, 1.3);
+//            self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1.0, 1.0);
             
             [UIView animateWithDuration:0.15
                                   delay:0
                                 options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                              animations:^{	
-                                 self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1/1.3, 1/1.3);
+//                                 self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1/1.3, 1/1.3);
                                  self.alpha = 1;
                              }
                              completion:NULL];
@@ -402,11 +434,11 @@
         [UIView animateWithDuration:0.15
                               delay:0
                             options:UIViewAnimationCurveEaseIn | UIViewAnimationOptionAllowUserInteraction
-                         animations:^{	
-                             self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 0.8, 0.8);
+                         animations:^{
+//                             self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1.0, 1.0);//0.8, 0.8);
                              self.alpha = 0;
                          }
-                         completion:^(BOOL finished){ 
+                         completion:^(BOOL finished){
                              if(self.alpha == 0) {
                                  [[NSNotificationCenter defaultCenter] removeObserver:self];
                                  [hudView removeFromSuperview], hudView = nil;
@@ -439,10 +471,10 @@
 
 - (UIWindow *)overlayWindow {
     if(!overlayWindow) {
-        overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        overlayWindow = [[SVGlassPane alloc] initWithFrame:[UIScreen mainScreen].bounds];
         overlayWindow.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         overlayWindow.backgroundColor = [UIColor clearColor];
-        overlayWindow.userInteractionEnabled = NO;
+        overlayWindow.userInteractionEnabled = YES;
     }
     return overlayWindow;
 }
@@ -450,8 +482,8 @@
 - (UIView *)hudView {
     if(!hudView) {
         hudView = [[UIView alloc] initWithFrame:CGRectZero];
-        hudView.layer.cornerRadius = 10;
-		hudView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8];
+        //hudView.layer.cornerRadius = 10;
+		hudView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.75];
         hudView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin |
                                     UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin);
         
@@ -463,15 +495,15 @@
 - (UILabel *)stringLabel {
     if (stringLabel == nil) {
         stringLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-		stringLabel.textColor = [UIColor whiteColor];
+		stringLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.9];
 		stringLabel.backgroundColor = [UIColor clearColor];
 		stringLabel.adjustsFontSizeToFitWidth = YES;
-		stringLabel.textAlignment = UITextAlignmentCenter;
-		stringLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-		stringLabel.font = [UIFont boldSystemFontOfSize:16];
-		stringLabel.shadowColor = [UIColor blackColor];
-		stringLabel.shadowOffset = CGSizeMake(0, -1);
-        stringLabel.numberOfLines = 0;
+		stringLabel.textAlignment = UITextAlignmentLeft;//UITextAlignmentCenter;
+		stringLabel.baselineAdjustment = UIBaselineAdjustmentNone;//UIBaselineAdjustmentAlignCenters;
+		stringLabel.font = [UIFont boldSystemFontOfSize:12];
+//		stringLabel.shadowColor = [UIColor blackColor];
+//		stringLabel.shadowOffset = CGSizeMake(0, -1);
+        stringLabel.numberOfLines = 1;
     }
     
     if(!stringLabel.superview)
@@ -482,7 +514,7 @@
 
 - (UIImageView *)imageView {
     if (imageView == nil)
-        imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 28, 28)];
+        imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 20, 20)];
     
     if(!imageView.superview)
         [self.hudView addSubview:imageView];
@@ -492,9 +524,9 @@
 
 - (UIActivityIndicatorView *)spinnerView {
     if (spinnerView == nil) {
-        spinnerView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        spinnerView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];//  UIActivityIndicatorViewStyleWhiteLarge];
 		spinnerView.hidesWhenStopped = YES;
-		spinnerView.bounds = CGRectMake(0, 0, 37, 37);
+		spinnerView.bounds = CGRectMake(0, 0, 20, 20);
     }
     
     if(!spinnerView.superview)
