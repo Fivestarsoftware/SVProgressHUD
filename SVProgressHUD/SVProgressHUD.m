@@ -193,7 +193,7 @@
 - (void)setStatus:(NSString *)string {
 	
     CGFloat hudWidth = self.bounds.size.width;
-    CGFloat hudHeight;// = 40;
+    CGFloat hudHeight;
     CGFloat stringWidth = 0;
     CGFloat stringHeight = 0;
     CGRect labelRect = CGRectZero;
@@ -202,24 +202,15 @@
         CGSize stringSize = [string sizeWithFont:self.stringLabel.font constrainedToSize:CGSizeMake(280, 40)];
         stringWidth = stringSize.width;
         stringHeight = stringSize.height;
-        hudHeight = 30;//80+stringHeight;
+        hudHeight = 30;
         
-        if(stringWidth > hudWidth)
-            hudWidth = ceil(stringWidth/2)*2;
-
-//        if(hudHeight > 100) {
-//            labelRect = CGRectMake(12, 66, hudWidth, stringHeight);
-//            hudWidth+=24;
-//        } else {
-            //hudWidth+=24;
-            labelRect = CGRectMake(40, 8, hudWidth, stringHeight);
-//        }
+        labelRect = CGRectMake(40, 8, hudWidth, stringHeight);
     }
 	
 	self.hudView.bounds = CGRectMake(0, 0, hudWidth, hudHeight);
 	
     if(string)
-        self.imageView.center = CGPointMake(20, 15); //CGRectGetWidth(self.hudView.bounds)/2, 36);
+        self.imageView.center = CGPointMake(20, 15);
 	else
        	self.imageView.center = CGPointMake(CGRectGetWidth(self.hudView.bounds)/2, CGRectGetHeight(self.hudView.bounds)/2);
 	
@@ -228,7 +219,7 @@
 	self.stringLabel.frame = labelRect;
 	
 	if(string)
-		self.spinnerView.center = CGPointMake( 20, 15 ); //CGPointMake(ceil(CGRectGetWidth(self.hudView.bounds)/2)+0.5, 40.5);
+		self.spinnerView.center = CGPointMake( 20, 15 );
 	else
 		self.spinnerView.center = CGPointMake(ceil(CGRectGetWidth(self.hudView.bounds)/2)+0.5, ceil(self.hudView.bounds.size.height/2)+0.5);
 }
@@ -313,7 +304,7 @@
         activeHeight += statusBarFrame.size.height*2;
     
     activeHeight -= keyboardHeight;
-    CGFloat posY = 79;//410;//floor(activeHeight*0.45);
+    CGFloat posY = 79;
     CGFloat posX = orientationFrame.size.width/2;
     
     CGPoint newCenter;
@@ -386,13 +377,11 @@
         
         if(self.alpha != 1) {
             [self registerNotifications];
-//            self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1.0, 1.0);
             
             [UIView animateWithDuration:0.15
                                   delay:0
                                 options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState
                              animations:^{	
-//                                 self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1/1.3, 1/1.3);
                                  self.alpha = 1;
                              }
                              completion:NULL];
@@ -429,11 +418,10 @@
 - (void)dismiss {
     dispatch_async(dispatch_get_main_queue(), ^{
 
-        [UIView animateWithDuration:0.15
+        [UIView animateWithDuration:0.35
                               delay:0
                             options:UIViewAnimationCurveEaseIn | UIViewAnimationOptionAllowUserInteraction
                          animations:^{
-//                             self.hudView.transform = CGAffineTransformScale(self.hudView.transform, 1.0, 1.0);//0.8, 0.8);
                              self.alpha = 0;
                          }
                          completion:^(BOOL finished){
@@ -496,11 +484,9 @@
 		stringLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.9];
 		stringLabel.backgroundColor = [UIColor clearColor];
 		stringLabel.adjustsFontSizeToFitWidth = YES;
-		stringLabel.textAlignment = UITextAlignmentLeft;//UITextAlignmentCenter;
-		stringLabel.baselineAdjustment = UIBaselineAdjustmentNone;//UIBaselineAdjustmentAlignCenters;
+		stringLabel.textAlignment = UITextAlignmentLeft;
+		stringLabel.baselineAdjustment = UIBaselineAdjustmentNone;
 		stringLabel.font = [UIFont boldSystemFontOfSize:12];
-//		stringLabel.shadowColor = [UIColor blackColor];
-//		stringLabel.shadowOffset = CGSizeMake(0, -1);
         stringLabel.numberOfLines = 1;
     }
     
@@ -522,7 +508,7 @@
 
 - (UIActivityIndicatorView *)spinnerView {
     if (spinnerView == nil) {
-        spinnerView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];//  UIActivityIndicatorViewStyleWhiteLarge];
+        spinnerView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
 		spinnerView.hidesWhenStopped = YES;
 		spinnerView.bounds = CGRectMake(0, 0, 20, 20);
     }
